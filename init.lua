@@ -663,7 +663,32 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {
+          cmd = { 'clangd', '--compile-commands-dir=.' },
+          filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda', 'proto' },
+          root_dir = function(fname)
+            return require('lspconfig.util').root_pattern(
+              'platformio.ini',
+              'compile_commands.json',
+              '.clangd',
+              'compile_flags.txt',
+              'CMakeLists.txt',
+              'Makefile',
+              '.git'
+            )(fname) or require('lspconfig.util').path.dirname(fname)
+          end,
+          init_options = {
+            clangdFileStatus = true,
+            usePlaceholders = true,
+            completeUnimported = true,
+            semanticHighlighting = true,
+            fallbackFlags = {
+              '-std=c++17',
+              '-I/usr/include',
+              '-I/usr/local/include',
+            },
+          },
+        },
         gopls = {},
         pyright = {},
         -- rust_analyzer = {},
@@ -936,7 +961,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 'bash', 'c', 'cpp', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
