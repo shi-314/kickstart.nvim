@@ -733,6 +733,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'prettier', -- Used to format markdown, javascript, and other files
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -785,11 +786,32 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        markdown = { 'prettier' },
+        json = { 'prettier' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
+      },
+      formatters = {
+        prettier = {
+          options = {
+            ft_parsers = {
+              markdown = 'markdown',
+            },
+            ext_parsers = {
+              ['.md'] = 'markdown',
+            },
+          },
+          args = {
+            '--stdin-filepath',
+            '$FILENAME',
+            '--print-width=120',
+            '--prose-wrap=always',
+            '--tab-width=2',
+          },
+        },
       },
     },
   },
@@ -996,6 +1018,16 @@ require('lazy').setup({
   -- require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+
+  { -- Auto session management
+    'rmagatti/auto-session',
+    lazy = false,
+    ---@module "auto-session"
+    ---@type AutoSession.Config
+    opts = {
+      suppressed_dirs = { '~/', '~/Projects', '~/Downloads', '/' },
+    },
+  },
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
