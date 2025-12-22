@@ -171,6 +171,16 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
+-- Git keymaps
+vim.keymap.set('n', '<leader>gg', function()
+  -- Check if current buffer is a fugitive buffer
+  if vim.bo.filetype == 'fugitive' then
+    vim.cmd('close')
+  else
+    vim.cmd('Git')
+  end
+end, { desc = 'Toggle [G]it status' })
+
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience.
@@ -240,6 +250,7 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
+  'tpope/vim-fugitive', -- Git integration
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
