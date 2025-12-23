@@ -181,6 +181,11 @@ vim.keymap.set('n', '<leader>gg', function()
   end
 end, { desc = 'Toggle [G]it status' })
 
+-- Spell checking keymaps
+vim.keymap.set('n', '<leader>z', function()
+  require('telescope.builtin').spell_suggest(require('telescope.themes').get_cursor())
+end, { desc = 'Spelling suggestions' })
+
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience.
