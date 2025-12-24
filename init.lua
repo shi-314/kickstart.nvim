@@ -171,6 +171,21 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
+-- Git keymaps
+vim.keymap.set('n', '<leader>gg', function()
+  -- Check if current buffer is a fugitive buffer
+  if vim.bo.filetype == 'fugitive' then
+    vim.cmd('close')
+  else
+    vim.cmd('Git')
+  end
+end, { desc = 'Toggle [G]it status' })
+
+-- Spell checking keymaps
+vim.keymap.set('n', '<leader>z', function()
+  require('telescope.builtin').spell_suggest(require('telescope.themes').get_cursor())
+end, { desc = 'Spelling suggestions' })
+
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience.
@@ -240,6 +255,7 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
+  'tpope/vim-fugitive', -- Git integration
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
@@ -691,7 +707,7 @@ require('lazy').setup({
         },
         gopls = {},
         pyright = {},
-        -- rust_analyzer = {},
+        rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -1033,7 +1049,7 @@ require('lazy').setup({
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!

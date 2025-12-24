@@ -2,4 +2,10 @@
 --  I promise not to create any merge conflicts in this directory :)
 --
 -- See the kickstart.nvim README for more information
-return {}
+return {
+  -- Rust language support
+  {
+    'rust-lang/rust.vim',
+    ft = 'rust',
+  },
+}
