@@ -300,6 +300,24 @@ require('lazy').setup({
         changedelete = { text = '~' },
       },
     },
+    keys = {
+      {
+        '<leader>tm',
+        function()
+          local gitsigns = require 'gitsigns'
+          if vim.g.gitsigns_diff_master then
+            gitsigns.reset_base(true)
+            vim.g.gitsigns_diff_master = false
+            vim.notify 'Gitsigns: base reset to index'
+          else
+            gitsigns.change_base('origin/main', true)
+            vim.g.gitsigns_diff_master = true
+            vim.notify 'Gitsigns: showing changes vs origin/main'
+          end
+        end,
+        desc = '[T]oggle git diff against [m]ain',
+      },
+    },
   },
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
@@ -951,7 +969,7 @@ require('lazy').setup({
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   { -- Auto session management
     'rmagatti/auto-session',
