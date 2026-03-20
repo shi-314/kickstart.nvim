@@ -8,4 +8,12 @@ return {
     'rust-lang/rust.vim',
     ft = 'rust',
   },
+
+  -- Markdown preview in browser
+  {
+    'iamcco/markdown-preview.nvim',
+    cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
+    ft = 'markdown',
+    build = 'cd app && bash install.sh',
+  },
 }
