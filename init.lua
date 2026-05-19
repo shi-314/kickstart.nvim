@@ -667,7 +667,8 @@ require('lazy').setup({
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
+        ts_ls = {},
+        eslint = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -681,6 +682,8 @@ require('lazy').setup({
       local lsp_to_mason = {
         rust_analyzer = 'rust-analyzer',
         lua_ls = 'lua-language-server',
+        ts_ls = 'typescript-language-server',
+        eslint = 'eslint-lsp',
       }
       local ensure_installed = vim.tbl_map(function(name) return lsp_to_mason[name] or name end, vim.tbl_keys(servers or {}))
       vim.list_extend(ensure_installed, {
@@ -762,7 +765,10 @@ require('lazy').setup({
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
+        javascript = { 'prettier' },
+        typescript = { 'prettier' },
+        javascriptreact = { 'prettier' },
+        typescriptreact = { 'prettier' },
       },
       formatters = {
         prettier = {
@@ -942,17 +948,30 @@ require('lazy').setup({
 
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    branch = 'main',
+    lazy = false,
     build = ':TSUpdate',
-    main = 'nvim-treesitter.configs',
-    opts = {
-      ensure_installed = { 'bash', 'c', 'cpp', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
-      auto_install = true,
-      highlight = {
-        enable = true,
-        additional_vim_regex_highlighting = { 'ruby' },
-      },
-      indent = { enable = true, disable = { 'ruby' } },
-    },
+    config = function()
+      local parsers = {
+        'bash', 'c', 'cpp', 'diff', 'html', 'javascript', 'jsdoc', 'json',
+        'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'tsx',
+        'typescript', 'vim', 'vimdoc',
+      }
+      require('nvim-treesitter').install(parsers)
+
+      local filetypes = {
+        'bash', 'c', 'cpp', 'diff', 'html', 'javascript', 'javascriptreact',
+        'json', 'lua', 'markdown', 'query', 'tsx', 'typescript',
+        'typescriptreact', 'vim', 'help',
+      }
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = filetypes,
+        callback = function(args)
+          pcall(vim.treesitter.start, args.buf)
+          vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end,
+      })
+    end,
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
