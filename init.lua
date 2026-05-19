@@ -774,25 +774,6 @@ require('lazy').setup({
         javascriptreact = { 'prettier' },
         typescriptreact = { 'prettier' },
       },
-      formatters = {
-        prettier = {
-          options = {
-            ft_parsers = {
-              markdown = 'markdown',
-            },
-            ext_parsers = {
-              ['.md'] = 'markdown',
-            },
-          },
-          args = {
-            '--stdin-filepath',
-            '$FILENAME',
-            '--print-width=120',
-            '--prose-wrap=always',
-            '--tab-width=2',
-          },
-        },
-      },
     },
   },
 
