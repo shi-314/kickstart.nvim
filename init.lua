@@ -164,6 +164,17 @@ vim.o.scrolloff = 10
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- [[ Neovide GUI settings ]]
+-- These only take effect when running the Neovide GUI client (vim.g.neovide
+-- is unset in terminal Neovim). Drop shadows on floats are enabled by default.
+if vim.g.neovide then
+  vim.o.guifont = 'JetBrainsMono Nerd Font Mono:h12'
+  vim.g.neovide_floating_corner_radius = 0.4
+  vim.g.neovide_floating_shadow = true
+  vim.g.neovide_floating_z_height = 100
+  vim.g.neovide_light_radius = 8
+end
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -446,6 +457,9 @@ require('lazy').setup({
         require('telescope').extensions.frecency.frecency { workspace = 'CWD' }
       end, { desc = '[S]earch Recent Files (frecency, CWD)' })
       vim.keymap.set('n', '<leader>sc', builtin.commands, { desc = '[S]earch [C]ommands' })
+      vim.keymap.set('n', '<leader>st', function()
+        builtin.colorscheme { enable_preview = true, ignore_builtins = true }
+      end, { desc = '[S]earch [T]hemes' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
       -- This runs on LSP attach per buffer (see main LSP attach function in 'neovim/nvim-lspconfig' config for more info,
@@ -616,6 +630,7 @@ require('lazy').setup({
           --
           -- This may be unwanted, since they displace some of your code
           if client and client:supports_method('textDocument/inlayHint', event.buf) then
+            vim.lsp.inlay_hint.enable(true, { bufnr = event.buf })
             map('<leader>th', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end, '[T]oggle Inlay [H]ints')
           end
         end,
@@ -623,7 +638,7 @@ require('lazy').setup({
 
       -- LSP hover tooltip style
       vim.keymap.set('n', 'K', function()
-        vim.lsp.buf.hover { border = 'rounded', focusable = false }
+        vim.lsp.buf.hover { border = 'rounded', focusable = false, max_width = 100 }
       end, { desc = 'LSP Hover' })
 
       -- LSP servers and clients are able to communicate to each other what features they support.
@@ -885,12 +900,35 @@ require('lazy').setup({
         },
       }
 
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      -- Persist the colorscheme across sessions: save it whenever it changes,
+      -- and reload the last one on startup. Falls back to tokyonight-night.
+      local theme_file = vim.fn.stdpath 'data' .. '/last_colorscheme'
+      vim.api.nvim_create_autocmd('ColorScheme', {
+        callback = function(args)
+          if args.match and args.match ~= '' then
+            pcall(vim.fn.writefile, { args.match }, theme_file)
+          end
+        end,
+      })
+
+      local saved
+      if vim.fn.filereadable(theme_file) == 1 then
+        saved = vim.fn.readfile(theme_file)[1]
+      end
+      if not (saved and pcall(vim.cmd.colorscheme, saved)) then
+        vim.cmd.colorscheme 'tokyonight-night'
+      end
     end,
   },
+
+  -- Extra colorschemes, browsable via `<leader>st`.
+  { 'catppuccin/nvim', name = 'catppuccin', lazy = true },
+  { 'savq/melange-nvim', name = 'melange', lazy = true },
+  { 'rose-pine/neovim', name = 'rose-pine', lazy = true },
+  -- Loaded eagerly: its colors/ dir has a non-standard `themes` subdir that
+  -- the Telescope colorscheme picker would otherwise mis-list as a theme.
+  { 'xiantang/darcula-dark.nvim', lazy = false },
+  { 'olimorris/onedarkpro.nvim', lazy = true },
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
@@ -925,6 +963,41 @@ require('lazy').setup({
       -- cursor location to LINE:COLUMN
       ---@diagnostic disable-next-line: duplicate-set-field
       statusline.section_location = function() return '%2l:%-2v' end
+
+      -- Session management. Sessions are auto-saved per project directory
+      -- by the VimLeavePre autocmd below.
+      require('mini.sessions').setup()
+
+      -- Start screen shown when launching with no file. Lists recent sessions
+      -- (pick one to jump straight into that project) and recent files.
+      local starter = require 'mini.starter'
+      starter.setup {
+        items = {
+          starter.sections.sessions(8, true),
+          starter.sections.recent_files(5, false),
+          starter.sections.builtin_actions(),
+        },
+      }
+
+      -- Autotrack: on exit, save a session named after the current directory,
+      -- so every project shows up on the start screen with no manual step.
+      -- Skipped when only the start screen is open, to avoid junk sessions.
+      vim.api.nvim_create_autocmd('VimLeavePre', {
+        group = vim.api.nvim_create_augroup('kickstart-session-autotrack', { clear = true }),
+        callback = function()
+          local has_file = false
+          for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+            if vim.bo[buf].buflisted and vim.bo[buf].buftype == '' and vim.api.nvim_buf_get_name(buf) ~= '' then
+              has_file = true
+              break
+            end
+          end
+          local name = vim.fn.fnamemodify(vim.fn.getcwd(), ':t')
+          if has_file and name ~= '' then
+            pcall(MiniSessions.write, name)
+          end
+        end,
+      })
 
       -- ... and there is more!
       --  Check out: https://github.com/nvim-mini/mini.nvim
@@ -969,7 +1042,7 @@ require('lazy').setup({
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
@@ -998,7 +1071,11 @@ require('lazy').setup({
   { -- Render markdown in-editor
     'MeanderingProgrammer/render-markdown.nvim',
     dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.nvim' },
-    opts = {},
+    opts = {
+      -- Code blocks: no language header, and no separate background so they
+      -- blend into the float instead of forming a darker band.
+      code = { language_name = false, language_icon = false, disable_background = true },
+    },
   },
 
   { import = 'custom.plugins' },
