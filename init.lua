@@ -173,6 +173,8 @@ if vim.g.neovide then
   vim.g.neovide_floating_shadow = true
   vim.g.neovide_floating_z_height = 100
   vim.g.neovide_light_radius = 8
+  vim.g.neovide_cursor_trail_size = 0.05
+  vim.g.neovide_cursor_animation_length = 0.03
 end
 
 -- [[ Basic Keymaps ]]
