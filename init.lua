@@ -164,6 +164,10 @@ vim.o.scrolloff = 10
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- Collapse the command line so the statusline sits flush on the bottom row.
+-- It reappears automatically while typing a command or search.
+vim.o.cmdheight = 0
+
 -- [[ Neovide GUI settings ]]
 -- These only take effect when running the Neovide GUI client (vim.g.neovide
 -- is unset in terminal Neovim). Drop shadows on floats are enabled by default.
@@ -175,6 +179,10 @@ if vim.g.neovide then
   vim.g.neovide_light_radius = 8
   vim.g.neovide_cursor_trail_size = 0.05
   vim.g.neovide_cursor_animation_length = 0.03
+
+  -- Cmd+V pastes from the system clipboard (Neovide sends Cmd as <D-...>).
+  vim.keymap.set({ 'n', 'x' }, '<D-v>', '"+p', { desc = 'Paste from system clipboard' })
+  vim.keymap.set({ 'i', 'c' }, '<D-v>', '<C-r>+', { desc = 'Paste from system clipboard' })
 end
 
 -- [[ Basic Keymaps ]]
