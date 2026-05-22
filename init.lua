@@ -991,13 +991,24 @@ require('lazy').setup({
 
       -- Autotrack: on exit, save a session named after the current directory,
       -- so every project shows up on the start screen with no manual step.
-      -- Skipped when only the start screen is open, to avoid junk sessions.
+      -- Only saved when a real project file is open: throwaway git editor
+      -- buffers (commit/rebase messages) and the start screen don't count,
+      -- which keeps junk sessions off the start screen.
       vim.api.nvim_create_autocmd('VimLeavePre', {
         group = vim.api.nvim_create_augroup('kickstart-session-autotrack', { clear = true }),
         callback = function()
+          -- Filetypes git sets when it launches nvim as a throwaway $EDITOR.
+          local transient_ft = { gitcommit = true, gitrebase = true }
           local has_file = false
           for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-            if vim.bo[buf].buflisted and vim.bo[buf].buftype == '' and vim.api.nvim_buf_get_name(buf) ~= '' then
+            local bufname = vim.api.nvim_buf_get_name(buf)
+            if
+              vim.bo[buf].buflisted
+              and vim.bo[buf].buftype == ''
+              and bufname ~= ''
+              and not bufname:match '/%.git/'
+              and not transient_ft[vim.bo[buf].filetype]
+            then
               has_file = true
               break
             end
@@ -1058,6 +1069,9 @@ require('lazy').setup({
   require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
+  -- Disabled: auto-session conflicted with mini.sessions (the start screen).
+  -- mini.sessions + mini.starter is the single session system now.
+  --[[
   { -- Auto session management
     'rmagatti/auto-session',
     lazy = false,
@@ -1067,6 +1081,7 @@ require('lazy').setup({
       suppressed_dirs = { '~/', '~/Projects', '~/Downloads', '/' },
     },
   },
+  --]]
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
