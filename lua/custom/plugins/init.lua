@@ -15,5 +15,8 @@ return {
     cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
     ft = 'markdown',
     build = 'cd app && bash install.sh',
+    init = function()
+      vim.g.mkdp_theme = 'light'
+    end,
   },
 }

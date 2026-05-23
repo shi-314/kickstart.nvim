@@ -246,7 +246,6 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 vim.keymap.set('n', '<C-n>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-e>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-u>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -939,6 +938,8 @@ require('lazy').setup({
   -- the Telescope colorscheme picker would otherwise mis-list as a theme.
   { 'xiantang/darcula-dark.nvim', lazy = false },
   { 'olimorris/onedarkpro.nvim', lazy = true },
+  { 'EdenEast/nightfox.nvim', lazy = true },
+  { 'NLKNguyen/papercolor-theme', lazy = true },
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
@@ -1015,6 +1016,9 @@ require('lazy').setup({
           end
           local name = vim.fn.fnamemodify(vim.fn.getcwd(), ':t')
           if has_file and name ~= '' then
+            -- Close neo-tree first so its special buffer isn't serialized
+            -- into the session — restoring it produces an empty sidebar.
+            pcall(vim.cmd, 'Neotree close')
             pcall(MiniSessions.write, name)
           end
         end,
