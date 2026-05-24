@@ -975,16 +975,37 @@ require('lazy').setup({
       ---@diagnostic disable-next-line: duplicate-set-field
       statusline.section_location = function() return '%2l:%-2v' end
 
-      -- Session management. Sessions are auto-saved per project directory
-      -- by the VimLeavePre autocmd below.
-      require('mini.sessions').setup()
-
-      -- Start screen shown when launching with no file. Lists recent sessions
-      -- (pick one to jump straight into that project) and recent files.
+      -- Start screen shown when launching with no file. Sessions come from
+      -- resession (see plugin spec below); recent files are mini's built-in.
       local starter = require 'mini.starter'
+
+      -- Custom section: list resession sessions, most recent first.
+      -- mini.starter's built-in `sessions` section only knows how to read
+      -- mksession files, so we build our own from resession's JSON store.
+      local function resession_sessions(n)
+        return function()
+          local resession = require 'resession'
+          local names = resession.list()
+          local dir = vim.fn.stdpath 'data' .. '/resession'
+          table.sort(names, function(a, b)
+            return vim.fn.getftime(dir .. '/' .. a .. '.json') > vim.fn.getftime(dir .. '/' .. b .. '.json')
+          end)
+          local items = {}
+          for i, name in ipairs(names) do
+            if i > n then break end
+            table.insert(items, {
+              action = function() require('resession').load(name) end,
+              name = name,
+              section = 'Sessions',
+            })
+          end
+          return items
+        end
+      end
+
       starter.setup {
         items = {
-          starter.sections.sessions(8, true),
+          resession_sessions(8),
           starter.sections.recent_files(5, false),
           starter.sections.builtin_actions(),
         },
@@ -1016,10 +1037,7 @@ require('lazy').setup({
           end
           local name = vim.fn.fnamemodify(vim.fn.getcwd(), ':t')
           if has_file and name ~= '' then
-            -- Close neo-tree first so its special buffer isn't serialized
-            -- into the session — restoring it produces an empty sidebar.
-            pcall(vim.cmd, 'Neotree close')
-            pcall(MiniSessions.write, name)
+            pcall(require('resession').save, name, { notify = false })
           end
         end,
       })
@@ -1027,6 +1045,19 @@ require('lazy').setup({
       -- ... and there is more!
       --  Check out: https://github.com/nvim-mini/mini.nvim
     end,
+  },
+
+  { -- Session management. Replaces mini.sessions because resession doesn't
+    -- use :mksession — it serializes to JSON via its own API and skips
+    -- non-file buffers by default, so neo-tree/ministarter buffers never
+    -- end up in the saved session.
+    'stevearc/resession.nvim',
+    lazy = false,
+    opts = {
+      -- Separate dir so resession's JSON files don't collide with the
+      -- old mini.sessions Vimscript files in ~/.local/share/nvim/session/.
+      dir = 'resession',
+    },
   },
 
   { -- Highlight, edit, and navigate code
