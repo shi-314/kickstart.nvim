@@ -180,6 +180,14 @@ if vim.g.neovide then
   vim.g.neovide_cursor_trail_size = 0.05
   vim.g.neovide_cursor_animation_length = 0.03
 
+  -- Transparent, blurred (frosted-glass) background. These are GUI-level
+  -- settings: Neovide re-reads them each frame, so they survive colorscheme
+  -- switches without a ColorScheme autocmd. neovide_window_blurred is macOS-only
+  -- and its blur strength scales with neovide_opacity. Tune the values to taste.
+  vim.g.neovide_opacity = 0.92
+  vim.g.neovide_normal_opacity = 0.92
+  vim.g.neovide_window_blurred = true
+
   -- Cmd+V pastes from the system clipboard (Neovide sends Cmd as <D-...>).
   vim.keymap.set({ 'n', 'x' }, '<D-v>', '"+p', { desc = 'Paste from system clipboard' })
   vim.keymap.set({ 'i', 'c' }, '<D-v>', '<C-r>+', { desc = 'Paste from system clipboard' })
