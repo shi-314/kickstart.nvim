@@ -2,6 +2,17 @@
 -- NOTE: gitsigns is already included in init.lua but contains only the base
 -- config. This will add also the recommended keymaps.
 
+-- Pick the repo's default branch (main or master) for base comparisons.
+local function default_branch()
+  for _, b in ipairs { 'main', 'master' } do
+    vim.fn.system { 'git', 'rev-parse', '--verify', '--quiet', b }
+    if vim.v.shell_error == 0 then
+      return b
+    end
+  end
+  return 'HEAD'
+end
+
 return {
   {
     'lewis6991/gitsigns.nvim',
@@ -46,6 +57,21 @@ return {
         map('n', '<leader>hb', gitsigns.blame_line, { desc = 'git [b]lame line' })
         map('n', '<leader>hd', gitsigns.diffthis, { desc = 'git [d]iff against index' })
         map('n', '<leader>hD', function() gitsigns.diffthis '@' end, { desc = 'git [D]iff against last commit' })
+        -- Toggle whether the gutter signs compare against the index (uncommitted
+        -- changes, the default) or against main/master (everything your branch
+        -- changed, committed or not). This fixes signs "disappearing" after you commit.
+        map('n', '<leader>hc', function()
+          if vim.g.gitsigns_base_main then
+            gitsigns.change_base(nil, true)
+            vim.g.gitsigns_base_main = false
+            vim.notify('gitsigns: base = index (uncommitted changes)', vim.log.levels.INFO)
+          else
+            local base = default_branch()
+            gitsigns.change_base(base, true)
+            vim.g.gitsigns_base_main = true
+            vim.notify('gitsigns: base = ' .. base .. ' (branch changes)', vim.log.levels.INFO)
+          end
+        end, { desc = 'git toggle [c]ompare base (main/index)' })
         -- Toggles
         map('n', '<leader>tb', gitsigns.toggle_current_line_blame, { desc = '[T]oggle git show [b]lame line' })
         map('n', '<leader>tD', gitsigns.preview_hunk_inline, { desc = '[T]oggle git show [D]eleted' })

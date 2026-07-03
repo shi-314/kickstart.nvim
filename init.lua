@@ -219,14 +219,8 @@ vim.diagnostic.config {
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
 -- Git keymaps
-vim.keymap.set('n', '<leader>gg', function()
-  -- Check if current buffer is a fugitive buffer
-  if vim.bo.filetype == 'fugitive' then
-    vim.cmd('close')
-  else
-    vim.cmd('Git')
-  end
-end, { desc = 'Toggle [G]it status' })
+-- NOTE: <leader>gg now opens lazygit (see lua/custom/plugins/lazygit.lua).
+-- vim-fugitive is still installed and available via :Git for blame/etc.
 
 -- Spell checking keymaps
 vim.keymap.set('n', '<leader>z', function()
@@ -374,6 +368,7 @@ require('lazy').setup({
       spec = {
         { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
         { '<leader>t', group = '[T]oggle' },
+        { '<leader>g', group = '[G]it' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
