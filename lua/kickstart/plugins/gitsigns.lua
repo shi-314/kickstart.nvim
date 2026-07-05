@@ -2,15 +2,23 @@
 -- NOTE: gitsigns is already included in init.lua but contains only the base
 -- config. This will add also the recommended keymaps.
 
--- Pick the repo's default branch (main or master) for base comparisons.
-local function default_branch()
-  for _, b in ipairs { 'main', 'master' } do
-    vim.fn.system { 'git', 'rev-parse', '--verify', '--quiet', b }
+-- Resolve the ref to diff the gutter against: the merge-base between HEAD and
+-- the repo's default branch (preferring origin/main, then origin/master, then a
+-- local main/master). Diffing against the merge-base -- the commit where your
+-- branch diverged -- rather than the branch tip means the signs mark exactly
+-- what your branch changed, ignoring commits that landed on main afterwards.
+-- This matches IntelliJ's PR/branch view. Returns (merge_base_sha, ref_name).
+local function branch_base()
+  for _, ref in ipairs { 'origin/main', 'origin/master', 'main', 'master' } do
+    vim.fn.system { 'git', 'rev-parse', '--verify', '--quiet', ref }
     if vim.v.shell_error == 0 then
-      return b
+      local merge_base = vim.fn.system({ 'git', 'merge-base', 'HEAD', ref }):gsub('%s+', '')
+      if vim.v.shell_error == 0 and merge_base ~= '' then
+        return merge_base, ref
+      end
     end
   end
-  return 'HEAD'
+  return nil, nil
 end
 
 return {
@@ -58,18 +66,23 @@ return {
         map('n', '<leader>hd', gitsigns.diffthis, { desc = 'git [d]iff against index' })
         map('n', '<leader>hD', function() gitsigns.diffthis '@' end, { desc = 'git [D]iff against last commit' })
         -- Toggle whether the gutter signs compare against the index (uncommitted
-        -- changes, the default) or against main/master (everything your branch
-        -- changed, committed or not). This fixes signs "disappearing" after you commit.
+        -- changes, the default) or against the branch merge-base (everything your
+        -- branch changed vs main/master, committed or not -- like IntelliJ's PR
+        -- view). This fixes signs "disappearing" after you commit.
         map('n', '<leader>hc', function()
           if vim.g.gitsigns_base_main then
-            gitsigns.change_base(nil, true)
+            gitsigns.reset_base(true)
             vim.g.gitsigns_base_main = false
             vim.notify('gitsigns: base = index (uncommitted changes)', vim.log.levels.INFO)
           else
-            local base = default_branch()
+            local base, ref = branch_base()
+            if not base then
+              vim.notify('gitsigns: no main/master branch found to compare against', vim.log.levels.WARN)
+              return
+            end
             gitsigns.change_base(base, true)
             vim.g.gitsigns_base_main = true
-            vim.notify('gitsigns: base = ' .. base .. ' (branch changes)', vim.log.levels.INFO)
+            vim.notify('gitsigns: base = ' .. ref .. ' merge-base (branch changes)', vim.log.levels.INFO)
           end
         end, { desc = 'git toggle [c]ompare base (main/index)' })
         -- Toggles
